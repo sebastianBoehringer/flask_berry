@@ -1,0 +1,14 @@
+<html>
+<head>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+<body>
+<h1>Hello World</h1>
+<div>
+    <div>
+        this is an attempt to get started
+    </div>
+</div>
+</body>
+
+</html>
