@@ -3,7 +3,6 @@ from typing import List
 from data.Label import Label
 from data.LibraryEntry import LibraryEntry
 from data.db import get_db
-from error.Errors import MissingValueError
 
 
 class Book(LibraryEntry):
@@ -21,9 +20,12 @@ class Book(LibraryEntry):
         self.publisher = publisher
         self.labels = labels
 
-    def __str__(self) -> str:
-        return "Book{ authors: " + self.authors.__str__() + ", publisher: " + self.publisher + ", labels: " \
-               + self.labels.__str__() + "}"
+    def __repr__(self) -> str:
+        da_id = self.id
+        if self._id is None:
+            da_id = -1
+        return "Book{ id: '%i', name: '%s', location: '%s', authors: %s, publisher: '%s', labels: %s}" % \
+               (da_id, self.name, self.location, str(self.authors), self.publisher, str(self.labels))
 
     def save(self):
         if self.id is not None:
@@ -51,6 +53,8 @@ class Book(LibraryEntry):
                        (author, self.id))
             db.commit()
         for label in self.labels:
+            if label.id is None:
+                label.save()
             db.execute("INSERT INTO book_labels (book_id, label_id) VALUES (?, ?)",
                        (self.id, label.id))
             db.commit()
@@ -69,11 +73,13 @@ class Book(LibraryEntry):
 
     def delete(self):
         if self.id is None:
-            raise MissingValueError("book has no id")
+            print(f"Can't delete a Book without id, tried to delete {self}")
+            return False
         db = get_db()
         db.execute("DELETE FROM books where id = ?", (self.id,))
         self.__delete_relations()
         self._id = None
+        return True
 
     @staticmethod
     def from_db(entity_id: int):

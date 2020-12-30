@@ -19,7 +19,7 @@ class DbEntity(ABC):
         pass
 
     @abstractmethod
-    def delete(self):
+    def delete(self) -> bool:
         pass
 
     @staticmethod

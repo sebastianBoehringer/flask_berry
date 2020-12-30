@@ -3,7 +3,6 @@ from typing import List
 from data.Label import Label
 from data.LibraryEntry import LibraryEntry
 from data.db import get_db
-from error.Errors import MissingValueError
 
 
 class Song(LibraryEntry):
@@ -23,6 +22,15 @@ class Song(LibraryEntry):
         self.labels = labels
         assert duration > 0, "song has invalid duration"
         self.duration = duration
+
+    def __repr__(self) -> str:
+        da_id = self.id
+        if da_id is None:
+            da_id = -1
+        return "Song{ id: '%i', name: '%s', location: '%s', main_artists: %s, supporting_artists: %s, genre: '%s'," \
+               " labels: %s, duration: '%i'" % \
+               (da_id, self.name, self.location, str(self.main_artists), str(self.supporting_artists), self.genre,
+                str(self.labels), self.duration)
 
     @staticmethod
     def from_db(song_id: int) -> "Song":
@@ -67,6 +75,8 @@ class Song(LibraryEntry):
             db.execute("INSERT INTO song_supporting_artists (song_id, name) VALUES (?, ?)", (self._id, artist))
             db.commit()
         for label in self.labels:
+            if label.id is None:
+                label.save()
             db.execute("INSERT INTO song_labels (song_id, label_id) VALUES (?, ?)", (self._id, label.id))
             db.commit()
 
@@ -91,9 +101,11 @@ class Song(LibraryEntry):
 
     def delete(self):
         if self.id is None:
-            raise MissingValueError("song has no id")
+            print(f"Can't delete a Song without id, tried to delete {self}")
+            return False
         db = get_db()
         db.execute("DELETE FROM songs where id = ?", (self._id,))
         db.commit()
         self.__delete_relations()
         self._id = None
+        return True

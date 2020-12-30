@@ -4,7 +4,6 @@ from data.Label import Label
 from data.LibraryEntry import LibraryEntry
 from data.Song import Song
 from data.db import get_db
-from error.Errors import MissingValueError
 
 Timestamp = NamedTuple("Timestamp", [('start', int), ('end', int)])
 
@@ -31,6 +30,13 @@ class Album(LibraryEntry):
         self._duration = total_duration
         self.labels = labels
 
+    def __repr__(self) -> str:
+        da_id = self.id
+        if self._id is None:
+            da_id = -1
+        return "Album{ id: '%i', name: '%s', location: '%s', songs: %s, artist: '%s', labels: %s}" % \
+               (da_id, self.name, self.location, str(self.songs), self.artist, str(self.labels))
+
     def save(self):
         if self.id is not None:
             self.update()
@@ -50,11 +56,15 @@ class Album(LibraryEntry):
         """
         db = get_db()
         for label in self.labels:
+            if label.id is None:
+                label.save()
             db.execute("INSERT INTO album_labels (album_id, label_id)"
                        " VALUES (?, ?)", (self.id, label.id))
             db.commit()
 
         for (song, timestamp) in self.songs:
+            if song.id is None:
+                song.save()
             song.save()
             db.execute("INSERT INTO album_songs (album_id, song_id) "
                        "VALUES (?,?)", self._id, song.id)
@@ -90,7 +100,8 @@ class Album(LibraryEntry):
 
     def delete(self):
         if self.id is None:
-            raise MissingValueError("album has no id")
+            print(f"Can't delete an album without id, tried to delete {self}")
+            return False
         db = get_db()
         db.execute("DELETE from albums where id = ?", (self.id,))
         songs = db.execute("SELECT song_id from album_songs where album_id = ?", (self._id,)).fetchall()
@@ -100,6 +111,7 @@ class Album(LibraryEntry):
         self.__delete_relations()
         db.commit()
         self._id = None
+        return True
 
     @staticmethod
     def from_db(entity_id: int) -> "Album":

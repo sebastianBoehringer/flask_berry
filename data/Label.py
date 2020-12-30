@@ -1,6 +1,5 @@
 from data.DbEntity import DbEntity
 from data.db import get_db
-from error.Errors import MissingValueError
 
 
 class Label(DbEntity):
@@ -33,20 +32,37 @@ class Label(DbEntity):
 
     def delete(self):
         if self.id is None:
-            raise MissingValueError("label has no id")
-        # TODO labels might still be in use, fail gracefully in that case
-        # TODO clean up relation tables
+            print(f"Can't delete a label without id, tried to delete {self}")
+            return False
         db = get_db()
-        db.execute("DELETE from labels where labels.id = ?", (self._id,))
-        db.commit()
-        self._id = None
+        if not self.is_in_use():
+            db.execute("DELETE from labels where labels.id = ?", (self._id,))
+            db.commit()
+            self._id = None
+            return True
+        else:
+            print(f"Label {self} is still in use")
+            return False
 
-    def __str__(self):
+    def is_in_use(self) -> bool:
+        db = get_db()
+        song_count = db.execute("SELECT COUNT(*) as count FROM song_labels where label_id = ?", (self.id,))
+        if song_count["count"] > 0:
+            return True
+        book_count = db.execute("SELECT COUNT(*) as count FROM book_labels where label_id = ?", (self.id,))
+        if book_count["count"] > 0:
+            return True
+        album_count = db.execute("SELECT COUNT(*) as count FROM album_labels where label_id = ?", (self.id,))
+        if album_count["count"] > 0:
+            return True
+        return False
+
+    def __repr__(self) -> str:
         da_id = -1
         if self.id is not None:
             da_id = self.id
 
-        return "Label{ id: %i, name: %s}" % (da_id, self.name)
+        return "Label{ id: '%i', name: '%s'}" % (da_id, self.name)
 
     @staticmethod
     def from_db(entity_id: int) -> "Label":
