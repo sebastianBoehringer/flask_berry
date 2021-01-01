@@ -1,8 +1,8 @@
 from typing import List
 
-from data.Label import Label
-from data.LibraryEntry import LibraryEntry
-from data.db import get_db
+from app.data import Label
+from app.data.LibraryEntry import LibraryEntry
+from app.data.db import get_db
 
 
 class Song(LibraryEntry):

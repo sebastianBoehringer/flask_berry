@@ -1,9 +1,9 @@
 from typing import List, NamedTuple
 
-from data.Label import Label
-from data.LibraryEntry import LibraryEntry
-from data.Song import Song
-from data.db import get_db
+from app.data.Label import Label
+from app.data.LibraryEntry import LibraryEntry
+from app.data.Song import Song
+from app.data.db import get_db
 
 Timestamp = NamedTuple("Timestamp", [('start', int), ('end', int)])
 

@@ -1,5 +1,5 @@
-from data.DbEntity import DbEntity
-from data.db import get_db
+from app.data.DbEntity import DbEntity
+from app.data.db import get_db
 
 
 class Label(DbEntity):

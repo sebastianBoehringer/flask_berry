@@ -1,7 +1,7 @@
 import os
 from abc import ABC
 
-from data.DbEntity import DbEntity
+from app.data.DbEntity import DbEntity
 
 
 class LibraryEntry(DbEntity, ABC):

@@ -1,5 +1,6 @@
-<html>
+<html lang="en">
 <head>
+    <title>Flask Berry- The Library for you</title>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
 <body>
