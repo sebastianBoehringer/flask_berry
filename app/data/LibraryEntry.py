@@ -5,7 +5,7 @@ from app.data.DbEntity import DbEntity
 
 
 class LibraryEntry(DbEntity, ABC):
-    name: str = ""
+    name: str
     location: str
 
     def __init__(self, name: str, location: str, entry_id: int = None):
