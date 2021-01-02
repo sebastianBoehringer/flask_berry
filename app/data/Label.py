@@ -1,3 +1,5 @@
+from typing import Optional
+
 from app.data.DbEntity import DbEntity
 from app.data.db import get_db
 
@@ -65,7 +67,9 @@ class Label(DbEntity):
         return "Label{ id: '%i', name: '%s'}" % (da_id, self.name)
 
     @staticmethod
-    def from_db(entity_id: int) -> "Label":
+    def from_db(entity_id: int) -> Optional["Label"]:
         db = get_db()
         label = db.execute("SELECT * from labels where labels.id = ?", (entity_id,)).fetchone()
+        if label is None:
+            return None
         return Label(name=label["name"], label_id=label["id"])

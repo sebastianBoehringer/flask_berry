@@ -1,4 +1,4 @@
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Optional
 
 from app.data.Label import Label
 from app.data.LibraryEntry import LibraryEntry
@@ -114,10 +114,13 @@ class Album(LibraryEntry):
         return True
 
     @staticmethod
-    def from_db(entity_id: int) -> "Album":
+    def from_db(entity_id: int) -> Optional["Album"]:
         db = get_db()
         album = db.execute("SELECT * from albums where id = ?", (entity_id,)).fetchone()
+        if album is None:
+            return None
         album_id = album["id"]
+
         song_ids = db.execute("SELECT song_id from album_songs where album_id = ?", (album_id,)).fetchall()
         songs = []
         for row in song_ids:

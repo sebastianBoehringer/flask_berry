@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from app.data.Label import Label
 from app.data.LibraryEntry import LibraryEntry
@@ -82,9 +82,11 @@ class Book(LibraryEntry):
         return True
 
     @staticmethod
-    def from_db(entity_id: int):
+    def from_db(entity_id: int) -> Optional["Book"]:
         db = get_db()
         book = db.execute("SELECT * FROM books where id = ?", (entity_id,)).fetchone()
+        if book is None:
+            return None
         book_id = book["id"]
         label_ids = db.execute("SELECT label_id from book_labels where book_id = ?", (book_id,)).fetchall()
         label_list = []

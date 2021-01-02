@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 
-from app.data import Label
+from app.data.Label import Label
 from app.data.LibraryEntry import LibraryEntry
 from app.data.db import get_db
 
@@ -33,9 +33,11 @@ class Song(LibraryEntry):
                 str(self.labels), self.duration)
 
     @staticmethod
-    def from_db(song_id: int) -> "Song":
+    def from_db(entity_id: int) -> Optional["Song"]:
         db = get_db()
-        song = db.execute("SELECT * FROM songs where id = ?", song_id).fetchone()
+        song = db.execute("SELECT * FROM songs where id = ?", entity_id).fetchone()
+        if song is None:
+            return None
         song_id = song["id"]
         supporters = db.execute("SELECT name from song_supporting_artists where song_id = ?", (song_id,)).fetchall()
         sups = []
