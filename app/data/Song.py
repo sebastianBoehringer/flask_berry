@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional, Set, Tuple
 
 from app.data.Label import Label
 from app.data.LibraryEntry import LibraryEntry
@@ -6,20 +6,18 @@ from app.data.db import get_db
 
 
 class Song(LibraryEntry):
-    main_artists: List[str]
-    supporting_artists: List[str]
+    main_artists: Set[str]
+    supporting_artists: Set[str]
     genre: str
-    labels: List[Label]
     duration: int
 
-    def __init__(self, name: str, location: str, main_artists: List[str], supporting_artists: List[str], genre: str,
-                 labels: List[Label], duration: int, entry_id: int = None):
-        super().__init__(name, location, entry_id)
+    def __init__(self, name: str, location: str, main_artists: Set[str], supporting_artists: Set[str], genre: str,
+                 labels: Set[Label], duration: int, entry_id: int = None):
+        super().__init__(name, location, labels, entry_id)
         assert len(main_artists) > 0, "Song has no interprets"
         self.main_artists = main_artists
         self.supporting_artists = supporting_artists
         self.genre = genre
-        self.labels = labels
         assert duration > 0, "song has invalid duration"
         self.duration = duration
 
@@ -32,26 +30,38 @@ class Song(LibraryEntry):
                (da_id, self.name, self.location, str(self.main_artists), str(self.supporting_artists), self.genre,
                 str(self.labels), self.duration)
 
+    def __hash__(self):
+        return hash(self._key())
+
+    def _key(self) -> Tuple:
+        return *super()._key(), self.main_artists, self.supporting_artists, self.genre, self.duration
+
+    def __eq__(self, other):
+        if super().__eq__(other):
+            if type(other) is type(self):
+                return self.main_artists == other.main_artists and self.supporting_artists == other.supporting_artists and self.genre == other.genre and self.duration == other.duration
+        return False
+
     @staticmethod
     def from_db(entity_id: int) -> Optional["Song"]:
         db = get_db()
-        song = db.execute("SELECT * FROM songs where id = ?", entity_id).fetchone()
+        song = db.execute("SELECT * FROM songs where id = ?", (entity_id,)).fetchone()
         if song is None:
             return None
         song_id = song["id"]
         supporters = db.execute("SELECT name from song_supporting_artists where song_id = ?", (song_id,)).fetchall()
-        sups = []
+        sups = set()
         for row in supporters:
-            sups.append(row["name"])
+            sups.add(row["name"])
         artists = db.execute("SELECT name from song_artists where song_id = ?", (song_id,)).fetchall()
-        main_artists = []
+        main_artists = set()
         for row in artists:
-            main_artists.append(row["name"])
+            main_artists.add(row["name"])
         label_ids = db.execute("SELECT label_id from song_labels where song_id = ?", (song_id,)).fetchall()
-        labels = []
+        labels = set()
         for row in label_ids:
             label = Label.from_db(row["label_id"])
-            labels.append(label)
+            labels.add(label)
         return Song(entry_id=song_id, name=song["name"], genre=song["genre"], duration=song["duration"],
                     location=song["location"], labels=labels, main_artists=main_artists, supporting_artists=sups)
 
@@ -67,27 +77,6 @@ class Song(LibraryEntry):
         db.commit()
         self._id = cursor.lastrowid
         self.__save_relations()
-
-    def __save_relations(self):
-        db = get_db()
-        for artist in self.main_artists:
-            db.execute("INSERT INTO song_artists (song_id, name) VALUES (?, ?)", (self._id, artist))
-            db.commit()
-        for artist in self.supporting_artists:
-            db.execute("INSERT INTO song_supporting_artists (song_id, name) VALUES (?, ?)", (self._id, artist))
-            db.commit()
-        for label in self.labels:
-            if label.id is None:
-                label.save()
-            db.execute("INSERT INTO song_labels (song_id, label_id) VALUES (?, ?)", (self._id, label.id))
-            db.commit()
-
-    def __delete_relations(self):
-        db = get_db()
-        db.execute("DELETE FROM song_artists where song_id = ?", (self._id,))
-        db.execute("DELETE FROM song_supporting_artists where song_id = ?", (self._id,))
-        db.execute("DELETE FROM song_labels where song_id = ?", (self._id,))
-        db.commit()
 
     def update(self):
         if self.id is None:
@@ -111,3 +100,24 @@ class Song(LibraryEntry):
         self.__delete_relations()
         self._id = None
         return True
+
+    def __save_relations(self):
+        db = get_db()
+        for artist in self.main_artists:
+            db.execute("INSERT INTO song_artists (song_id, name) VALUES (?, ?)", (self._id, artist))
+            db.commit()
+        for artist in self.supporting_artists:
+            db.execute("INSERT INTO song_supporting_artists (song_id, name) VALUES (?, ?)", (self._id, artist))
+            db.commit()
+        for label in self.labels:
+            if label.id is None:
+                label.save()
+            db.execute("INSERT INTO song_labels (song_id, label_id) VALUES (?, ?)", (self._id, label.id))
+            db.commit()
+
+    def __delete_relations(self):
+        db = get_db()
+        db.execute("DELETE FROM song_artists where song_id = ?", (self._id,))
+        db.execute("DELETE FROM song_supporting_artists where song_id = ?", (self._id,))
+        db.execute("DELETE FROM song_labels where song_id = ?", (self._id,))
+        db.commit()
