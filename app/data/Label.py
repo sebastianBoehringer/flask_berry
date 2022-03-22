@@ -85,3 +85,8 @@ class Label(DbEntity):
         if label is None:
             return None
         return Label(name=label["name"], label_id=label["id"])
+
+    def as_dict(self) -> dict:
+        json_dict = super().as_dict()
+        json_dict['name'] = self.name
+        return json_dict

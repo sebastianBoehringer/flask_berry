@@ -109,3 +109,9 @@ class Book(LibraryEntry):
         db.execute("DELETE from book_labels where book_id = ?", (self.id,))
         db.execute("DELETE FROM book_authors where book_id = ?", (self.id,))
         db.commit()
+
+    def as_dict(self) -> dict:
+        json_dict = super().as_dict()
+        json_dict['authors'] = [author for author in self.authors]
+        json_dict['publisher'] = self.publisher
+        return json_dict

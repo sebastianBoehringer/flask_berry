@@ -35,3 +35,11 @@ class DbEntity(ABC):
     @abstractmethod
     def from_db(entity_id: int):
         pass
+
+    @abstractmethod
+    def as_dict(self) -> dict:
+        """Convert class to a dict because standard json module cannot deal with nested objects and sets. Thank god python
+        is basically just pseudocode :')
+        :return: The object as a dict
+        """
+        return {"id": self._id}

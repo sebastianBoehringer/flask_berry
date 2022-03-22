@@ -121,3 +121,11 @@ class Song(LibraryEntry):
         db.execute("DELETE FROM song_supporting_artists where song_id = ?", (self._id,))
         db.execute("DELETE FROM song_labels where song_id = ?", (self._id,))
         db.commit()
+
+    def as_dict(self) -> dict:
+        json_dict = super().as_dict()
+        json_dict['main_artists'] = [artist for artist in self.main_artists]
+        json_dict['supporting_artists'] = [artist for artist in self.supporting_artists]
+        json_dict['genre'] = self.genre
+        json_dict['duration'] = self.duration
+        return json_dict

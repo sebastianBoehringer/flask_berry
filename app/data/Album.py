@@ -6,10 +6,11 @@ from app.data.Song import Song
 from app.data.db import get_db
 
 Timestamp = NamedTuple("Timestamp", [('start', int), ('end', int)])
+SongTuple = NamedTuple("SongTuple", [('song', Song), ('timestamp', Timestamp)])
 
 
 class Album(LibraryEntry):
-    songs: Set[(Song, Timestamp)]
+    songs: Set[SongTuple]
     artist: str
 
     @property
@@ -146,3 +147,11 @@ class Album(LibraryEntry):
             song = Song.from_db(row["song_id"])
             song.delete()
         db.commit()
+
+    def as_dict(self) -> dict:
+        json_dict = super().as_dict()
+        json_dict['songs'] = [{'song': element.song.as_dict(),
+                               'timestamp': {'start': element.timestamp.start, 'end': element.timestamp.end}} for
+                              element in self.songs]
+        json_dict['artist'] = self.artist
+        return json_dict

@@ -29,3 +29,10 @@ class LibraryEntry(DbEntity, ABC):
 
     def _key(self) -> Tuple:
         return *super()._key(), self.name, self.location, self.labels
+
+    def as_dict(self) -> dict:
+        json_dict = super().as_dict()
+        json_dict['location'] = self.location
+        json_dict['name'] = self.name
+        json_dict['labels'] = [element.as_dict() for element in self.labels]
+        return json_dict
