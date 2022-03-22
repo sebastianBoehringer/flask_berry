@@ -87,7 +87,7 @@ Create table songs
     name     varchar       NOT NULL,
     genre    varchar,
     duration int           NOT NULL,
-    location string unique not null,
+    location varchar unique not null,
     CONSTRAINT positive_song_duration CHECK (duration > 0)
 );
 
