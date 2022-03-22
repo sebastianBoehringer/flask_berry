@@ -1,8 +1,10 @@
 import os
 
-from flask import Flask, render_template
+from app.data.Book import Book
+from flask import Flask, render_template, jsonify, request
 
 from app.data import db
+from app.data.Label import Label
 
 
 def create_app(test_config=None) -> Flask:
@@ -31,6 +33,22 @@ def create_app(test_config=None) -> Flask:
     @app.route('/')
     def hello_world():
         return render_template("mainpage")
+
+    @app.route('/books', methods=['POST'])
+    def create_book():
+
+        req_data = request.get_json()
+        book = Book(name=req_data['name'], location=req_data['location'], entry_id=getattr(req_data, 'id', None),
+                    publisher=req_data['publisher'],
+                    labels={Label(name=label['name'], label_id=getattr(label, 'id', None)) for label in
+                            req_data['labels']}, authors={author for author in req_data['authors']})
+        book.save()
+        return jsonify(book.as_dict())
+
+    @app.route('/books/<int:id>', methods=['GET'])
+    def get_book(id: int):
+        book = Book.from_db(id)
+        return jsonify(book.as_dict())
 
     db.init_app(app)
     return app
